@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coin Flip Experiment</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+
+        .people-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .person {
+            width: 50px;
+            height: 50px;
+            margin: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #000;
+            border-radius: 50%;
+            font-size: 18px;
+            font-weight: bold;
+            background-color: lightgray;
+        }
+
+        .heads {
+            background-color: lightgreen;
+        }
+
+        .tails {
+            background-color: lightcoral;
+        }
+
+        #results {
+            margin-top: 20px;
+            text-align: center;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        #percentages {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .percentage {
+            font-weight: bold;
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .percentage-green {
+            background-color: lightgreen;
+        }
+
+        .percentage-yellow {
+            background-color: #ffd700; /* Yellow */
+        }
+
+        .percentage-red {
+            background-color: #ff6347; /* Tomato */
+        }
+    </style>
+</head>
+<body>
+    <h1>Coin Flip Experiment</h1>
+    <div>
+        <label for="numPeople">Number of people to flip their coins (1-1000):</label>
+        <input type="number" id="numPeople" min="1" max="1000" value="1">
+    </div>
+    <div>
+        <label for="numFlips">Number of flips per person:</label>
+        <input type="number" id="numFlips" min="1" value="1">
+    </div>
+    <div>
+        <button onclick="runExperiment()">Flip Coins</button>
+    </div>
+    <div class="people-container" id="people">
+        <!-- People will be dynamically added here -->
+    </div>
+    <div id="results">
+        <h2>Results</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Person</th>
+                    <th>Results</th>
+                    <th>Percentage</th>
+                </tr>
+            </thead>
+            <tbody id="resultsBody">
+                <!-- Results will be dynamically added here -->
+            </tbody>
+        </table>
+    </div>
+    <div id="percentages"></div>
+
+    <script>
+        let peopleResults = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializePeople();
+            initializeResults();
+        });
+
+        function initializePeople() {
+            const numPeopleInput = document.getElementById('numPeople');
+            const numPeople = parseInt(numPeopleInput.value);
+            const peopleContainer = document.getElementById('people');
+            peopleContainer.innerHTML = ''; // Clear existing people
+
+            for (let i = 1; i <= numPeople; i++) {
+                const personDiv = document.createElement('div');
+                personDiv.classList.add('person');
+                personDiv.id = `person-${i}`;
+                personDiv.textContent = `a${i}`;
+                peopleContainer.appendChild(personDiv);
+            }
+        }
+
+        function initializeResults() {
+            peopleResults = []; // Clear existing results
+            const numPeople = parseInt(document.getElementById('numPeople').value);
+            for (let i = 1; i <= numPeople; i++) {
+                peopleResults.push([]);
+            }
+        }
+
+        function runExperiment() {
+            const numPeople = parseInt(document.getElementById('numPeople').value);
+            const numFlips = parseInt(document.getElementById('numFlips').value);
+            for (let i = 0; i < numPeople; i++) {
+                for (let j = 0; j < numFlips; j++) {
+                    flipCoin(i + 1);
+                }
+            }
+            updateResults();
+            calculatePercentages();
+        }
+
+        function flipCoin(personId) {
+            const isHeads = Math.random() < 0.5;
+            const result = isHeads ? 'H' : 'T';
+            peopleResults[personId - 1].push(result);
+            updatePersonCoin(personId, result);
+        }
+
+        function updatePersonCoin(personId, result) {
+            const personDiv = document.getElementById(`person-${personId}`);
+            personDiv.classList.remove('heads', 'tails');
+            if (result === 'H') {
+                personDiv.classList.add('heads');
+                personDiv.textContent = 'H';
+            } else if (result === 'T') {
+                personDiv.classList.add('tails');
+                personDiv.textContent = 'T';
+            } else {
+                personDiv.textContent = '-';
+            }
+        }
+
+        function updateResults() {
+            const resultsBody = document.getElementById('resultsBody');
+            resultsBody.innerHTML = '';
+            // Create array to hold sorted results
+            const sortedResults = [];
+            for (let i = 0; i < peopleResults.length; i++) {
+                const personId = i + 1;
+                const personResults = peopleResults[i];
+                const numHeads = personResults.filter(result => result === 'H').length;
+                const totalFlips = personResults.length;
+                let percentage = 0;
+                if (totalFlips > 0) {
+                    percentage = (numHeads / totalFlips) * 100;
+                }
+                sortedResults.push({
+                    personId: personId,
+                    results: personResults.join(', '),
+                    percentage: percentage.toFixed(2)
+                });
+            }
+            // Sort sortedResults array by percentage in descending order
+            sortedResults.sort((a, b) => b.percentage - a.percentage);
+            // Update table with sorted results
+            sortedResults.forEach(result => {
+                const row = resultsBody.insertRow();
+                row.innerHTML = `
+                    <td>${result.personId}</td>
+                    <td>${result.results}</td>
+                    <td><span class="percentage ${getPercentageColor(result.percentage)}">${result.percentage}%</span></td>
+                `;
+            });
+        }
+
+        function calculatePercentages() {
+            const percentagesDiv = document.getElementById('percentages');
+            percentagesDiv.innerHTML = '';
+            for (let i = 0; i < peopleResults.length; i++) {
+                const personResults = peopleResults[i];
+                const numHeads = personResults.filter(result => result === 'H').length;
+                const totalFlips = personResults.length;
+                let percentage = 0;
+                if (totalFlips > 0) {
+                    percentage = (numHeads / totalFlips) * 100;
+                }
+                const percentageText = totalFlips > 0 ? `${percentage.toFixed(2)}%` : '0%';
+                const percentageResult = document.createElement('div');
+                percentageResult.textContent = `Person ${i + 1}: ${percentageText}`;
+                percentagesDiv.appendChild(percentageResult);
+            }
+        }
+
+        function getPercentageColor(percentage) {
+            if (percentage >= 100) {
+                return 'percentage-green';
+            } else if (percentage >= 75) {
+                return 'percentage-yellow';
+            } else {
+                return 'percentage-red';
+            }
+        }
+
+        // Listen for changes in the number of people input
+        document.getElementById('numPeople').addEventListener('change', () => {
+            initializePeople();
+            initializeResults();
+        });
+    </script>
+</body>
+</html>
